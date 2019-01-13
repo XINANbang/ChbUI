@@ -17,7 +17,7 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".Wave" />
+        <activity android:name=".Wave.WaveActivity" />
     </application>
 
 </manifest>

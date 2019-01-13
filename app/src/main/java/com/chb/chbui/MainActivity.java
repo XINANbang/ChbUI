@@ -1,21 +1,17 @@
 package com.chb.chbui;
 
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
-import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
-import java.util.List;
-import java.util.Map;
+import com.chb.chbui.Wave.WaveActivity;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
 
@@ -28,7 +24,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         setContentView(R.layout.activity_main);
 
         mSamples = new Sample[]{
-                new Sample("贝塞尔曲线实现水波动画", Wave.class),
+                new Sample("贝塞尔曲线实现水波动画", WaveActivity.class),
         };
 
         mGridView = findViewById(R.id.cardlist);
@@ -38,7 +34,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> adapterView, View view, int position, long id) {
-
+        startActivity(mSamples[position].intent);
     }
 
     @Override
