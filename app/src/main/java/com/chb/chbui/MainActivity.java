@@ -11,6 +11,7 @@ import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.TextView;
 
+import com.chb.chbui.QQDragBall.QQDragBallActivity;
 import com.chb.chbui.Wave.WaveActivity;
 
 public class MainActivity extends AppCompatActivity implements AdapterView.OnItemClickListener {
@@ -25,6 +26,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         mSamples = new Sample[]{
                 new Sample("贝塞尔曲线实现水波动画", WaveActivity.class),
+                new Sample("QQ消息提醒红点", QQDragBallActivity.class),
         };
 
         mGridView = findViewById(R.id.cardlist);

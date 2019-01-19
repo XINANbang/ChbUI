@@ -68,7 +68,7 @@ public class WaveViewBezier extends View {
     }
 
     public void init() {
-        mWaveHeight = dpToPx(10);
+        mWaveHeight = dpToPx(15);
         mWaveLength = dpToPx(100);
         mPath = new Path();
         initPaint();

@@ -7,6 +7,7 @@
     <com.chb.chbui.Wave.WaveViewBezier
         android:id="@+id/bezier_wave"
         android:layout_width="match_parent"
-        android:layout_height="100dp" />
+        android:layout_height="100dp"
+        android:layout_marginTop="10dp"/>
 
 </LinearLayout>
