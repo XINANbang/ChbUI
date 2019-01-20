@@ -1,11 +1,44 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical" >
+    xmlns:chbui="http://schemas.android.com/apk/res-auto">
 
     <com.chb.chbui.QQDragBall.QQDragBall
+        android:id="@+id/qq_ball"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        chbui:ball_color = "#FF0000"
+        chbui:text_color = "#FFFFFF"
+        chbui:text_size = "15"
+        chbui:msg_count = "88" />
 
-</LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <Button
+            android:id="@+id/btn_reset"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:text="重置"
+            android:layout_weight="1"/>
+
+        <Button
+            android:id="@+id/btn_set_msg_count"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:text="设置消息"
+            android:layout_weight="1"/>
+
+        <EditText
+            android:id="@+id/et_msg_count"
+            android:layout_width="0dp"
+            android:layout_height="60dp"
+            android:gravity="center"
+            android:text="13"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
+
+</FrameLayout>

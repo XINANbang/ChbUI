@@ -2,6 +2,7 @@ package com.chb.chbui.QQDragBall;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -15,6 +16,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.BounceInterpolator;
 
+import com.chb.chbui.R;
 import com.chb.chbui.UIUtils;
 
 public class QQDragBall extends View {
@@ -40,8 +42,11 @@ public class QQDragBall extends View {
 
 
     private boolean mCanMove;
+    private boolean mOutRange;
     private boolean mDisappear;
     private int mMsgCount;
+
+    private QQDragBallListener mListener;
 
 
     public QQDragBall(Context context) {
@@ -55,10 +60,42 @@ public class QQDragBall extends View {
     public QQDragBall(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
+        parseAttrs(context, attrs);
     }
 
-    public void SetMsgCount(int count) {
+    public void parseAttrs(Context context, AttributeSet attrs) {
+        TypedArray array = context.obtainStyledAttributes(attrs, R.styleable.qq_ball_style);
+        mBallPaint.setColor(array.getColor(R.styleable.qq_ball_style_ball_color, Color.RED));
+        mTextPaint.setColor(array.getColor(R.styleable.qq_ball_style_text_color, Color.WHITE));
+        mTextPaint.setTextSize(UIUtils.sp2px(context, array.getInt(R.styleable.qq_ball_style_text_size, 15)));
+        mMsgCount = array.getInt(R.styleable.qq_ball_style_msg_count, 0);
+    }
+
+    public void setMsgCount(int count) {
         mMsgCount = count;
+        invalidate();
+    }
+
+    public void setListener(QQDragBallListener listener) {
+        mListener = listener;
+    }
+
+    public void setBallColor(int color) {
+        mBallPaint.setColor(color);
+        invalidate();
+    }
+
+    public void setTextColor(int color) {
+        mTextPaint.setColor(color);
+        invalidate();
+    }
+
+    public void reset() {
+        mDisappear = false;
+        mOutRange = false;
+        mCanMove = false;
+        mEndPoint.set(mStartPoint);
+        invalidate();
     }
 
     private void init() {
@@ -70,7 +107,6 @@ public class QQDragBall extends View {
         mEndPointA = new PointF();
         mEndPointB = new PointF();
         mPointO = new PointF();
-
     }
 
     private void initPaint() {
@@ -80,7 +116,9 @@ public class QQDragBall extends View {
         mBallPaint.setStyle(Paint.Style.FILL_AND_STROKE);
 
         mTextPaint = new Paint();
-        mTextPaint.setColor(Color.RED);
+        mTextPaint.setColor(Color.WHITE);
+        mTextPaint.setTextSize(UIUtils.sp2px(getContext(), 15));
+        mTextPaint.setTextAlign(Paint.Align.CENTER);
         mTextPaint.setFlags(Paint.ANTI_ALIAS_FLAG);
         mTextPaint.setStyle(Paint.Style.FILL_AND_STROKE);
     }
@@ -90,29 +128,28 @@ public class QQDragBall extends View {
         super.onSizeChanged(w, h, oldw, oldh);
         mStartPoint.set(w/2f, h/2f);
         mEndPoint.set(w/2f, h/2f);
-        Log.d(TAG, "onSizeChanged: mStartPoint = " + mStartPoint);
     }
 
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if (outOfDis()) {
-            drawBall(canvas, mEndPoint, mStartRadius);
-        } else {
-            Log.d(TAG, "onDraw: start point = " + mStartPoint + ", r = " + mCurrentStartRadius);
-            drawBall(canvas, mStartPoint, mCurrentStartRadius);
-            Log.d(TAG, "onDraw: mEndPoint point = " + mEndPoint + ", r = " + mStartRadius);
-            drawBall(canvas, mEndPoint, mStartRadius);
-            drawBezier(canvas);
-        }
-
         if (!mDisappear) {
+            if (outOfRange()) {
+                mOutRange = true;
+                drawBall(canvas, mEndPoint, mStartRadius);
+            } else {
+                drawBall(canvas, mEndPoint, mStartRadius);
+                if (!mOutRange) {
+                    drawBall(canvas, mStartPoint, mCurrentStartRadius);
+                    drawBezier(canvas);
+                }
+            }
+
             drawText(canvas, mEndPoint);
         }
     }
 
     private void drawBall(Canvas canvas, PointF point, float radius) {
-        mBallPaint.setColor(Color.RED);
         canvas.drawCircle(point.x, point.y, radius, mBallPaint);
     }
 
@@ -129,7 +166,6 @@ public class QQDragBall extends View {
         textRect.bottom = (int) (point.y + mStartRadius);
         Paint.FontMetricsInt fontMetrics = mTextPaint.getFontMetricsInt();
         int baseline = (textRect.bottom + textRect.top - fontMetrics.bottom - fontMetrics.top) / 2;
-        //文字绘制到整个布局的中心位置
         canvas.drawText(mMsgCount > 99 ? "99+" : mMsgCount + "", textRect.centerX(), baseline, mTextPaint);
     }
 
@@ -180,50 +216,68 @@ public class QQDragBall extends View {
         path.lineTo(mStartPointA.x, mStartPointA.y);
         path.close();
 
-        mBallPaint.setColor(Color.RED);
         canvas.drawPath(path, mBallPaint);
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        Log.d(TAG, "onTouchEvent: event = " + event.getAction());
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 mCanMove = canMove(event);
-                Log.d(TAG, "onTouchEvent: mCanMove = " + mCanMove);
+                mOutRange = false;
+                if (mListener != null) {
+                    mListener.onTouchDown();
+                }
                 break;
             case MotionEvent.ACTION_MOVE:
                 if (mCanMove) {
                     mEndPoint.set(event.getX(), event.getY());
                     setCurrentStartRadius();
                     invalidate();
+                    if (mListener != null) {
+                        mListener.onTouchMove();
+                    }
                 }
                 break;
             case MotionEvent.ACTION_UP:
-                if (outOfDis()) {
-                    //todo 爆炸效果
+                if (outOfRange()) {
+                    ballExplode();
                     mDisappear = true;
                     mEndPoint.set(mStartPoint);
+                    invalidate();
+                    if (mListener != null) {
+                        mListener.onTouchUpOutRange();
+                    }
                 } else {
-                    final float a = (mEndPoint.y - mStartPoint.y) / (mEndPoint.x - mStartPoint.x);
-                    ValueAnimator valueAnimator = ValueAnimator.ofFloat(mEndPoint.x, mStartPoint.x);
-                    valueAnimator.setDuration(500);
-                    valueAnimator.setInterpolator(new BounceInterpolator());
-                    valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-                        @Override
-                        public void onAnimationUpdate(ValueAnimator animation) {
-                            float x = (float) animation.getAnimatedValue();
-                            float y = mStartPoint.y + a * (x - mStartPoint.x);
-                            mEndPoint.set(x, y);
-                            setCurrentStartRadius();
-                            invalidate();
-                        }
-                    });
-                    valueAnimator.start();
+                    if (mEndPoint.x - mStartPoint.x != 0) {
+                        final float a = (mEndPoint.y - mStartPoint.y) / (mEndPoint.x - mStartPoint.x);
+                        ValueAnimator valueAnimator = ValueAnimator.ofFloat(mEndPoint.x, mStartPoint.x);
+                        valueAnimator.setDuration(500);
+                        valueAnimator.setInterpolator(new BounceInterpolator());
+                        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+                            @Override
+                            public void onAnimationUpdate(ValueAnimator animation) {
+                                float x = (float) animation.getAnimatedValue();
+                                float y = mStartPoint.y + a * (x - mStartPoint.x);
+                                mEndPoint.set(x, y);
+                                setCurrentStartRadius();
+                                invalidate();
+                            }
+                        });
+                        valueAnimator.start();
+                    }
+
+                    if (mListener != null) {
+                        mListener.onTouchUpOutRange();
+                    }
                 }
                 break;
         }
         return true;
+    }
+
+    private void ballExplode() {
+        ////todo 这边欠缺爆炸效果，网友大多使用序列帧实现，我觉得依旧可以使用自定义view动画来做
     }
 
     private boolean canMove(MotionEvent event) {
@@ -232,26 +286,21 @@ public class QQDragBall extends View {
         rect.right = (int)(mStartPoint.x + mStartRadius);
         rect.top = (int)(mStartPoint.y - mStartRadius);
         rect.bottom = (int)(mStartPoint.y + mStartRadius);
-        Log.d(TAG, "canMove: mStartPoint = " + mStartPoint + " , mStartRadius = " + mStartRadius + " , event = " + event.getX() + " , " + event.getY());
         return rect.contains((int) event.getX(), (int) event.getY());
     }
 
-    private boolean outOfDis() {
+    private boolean outOfRange() {
         return Math.sqrt( Math.pow(mEndPoint.y - mStartPoint.y, 2)
                 + Math.pow(mEndPoint.x - mStartPoint.x, 2)) > UIUtils.dp2px(getContext(),DRAG_MAX_DIS);
     }
 
     private void setCurrentStartRadius() {
-        if (outOfDis()) {
+        if (outOfRange()) {
             mCurrentStartRadius = 0f;
         } else {
             float distance = (float) Math.sqrt(Math.pow(mStartPoint.x - mEndPoint.x, 2)
                     + Math.pow(mStartPoint.y - mEndPoint.y, 2));
             float percent = distance / UIUtils.dp2px(getContext(),DRAG_MAX_DIS);
-            Log.d(TAG, "setCurrentStartRadius: mStartPoint = " + mStartPoint);
-            Log.d(TAG, "setCurrentStartRadius: mEndPoint = " + mEndPoint);
-            Log.d(TAG, "setCurrentStartRadius: distance = " + distance);
-            Log.d(TAG, "setCurrentStartRadius: percent = " + percent);
             mCurrentStartRadius = (1 - percent * 0.8f) * mStartRadius;
         }
     }
