@@ -19,6 +19,7 @@
 
         <activity android:name=".Wave.WaveActivity" />
         <activity android:name=".QQDragBall.QQDragBallActivity" />
+        <activity android:name=".ViewScroller.ViewScrollerActivity" />
     </application>
 
 </manifest>
